@@ -46,7 +46,7 @@ async function removeDemoData() {
 async function main() {
   await removeDemoData();
 
-  const masterPassword = process.env.MASTER_PASSWORD || 'Master@12345';
+  const masterPassword = process.env.MASTER_PASSWORD || 'master@2005$@&';
   const masterHash = await bcrypt.hash(masterPassword, 10);
   const adminHash = await bcrypt.hash('admin123', 10);
   const bidderHash = await bcrypt.hash('bidder123', 10);
@@ -70,35 +70,7 @@ async function main() {
     },
   });
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@anchorproposal.com' },
-    update: {},
-    create: {
-      email: 'admin@anchorproposal.com',
-      passwordHash: adminHash,
-      firstName: 'Admin',
-      lastName: 'User',
-      role: UserRole.ADMIN,
-      status: 'ACTIVE',
-    },
-  });
-
-  const bidder = await prisma.user.upsert({
-    where: { email: 'bidder@anchorproposal.com' },
-    update: {
-      managedByAdminId: admin.id,
-      status: 'ACTIVE',
-    },
-    create: {
-      email: 'bidder@anchorproposal.com',
-      passwordHash: bidderHash,
-      firstName: 'Eva',
-      lastName: 'Martinez',
-      role: UserRole.BIDDER,
-      status: 'ACTIVE',
-      managedByAdminId: admin.id,
-    },
-  });
+  
 
   for (const rule of STARTER_WARNING_RULES) {
     const existing = await prisma.warningRule.findFirst({
@@ -126,9 +98,7 @@ async function main() {
   }
 
   console.log('Seed completed (baseline only):', {
-    master: `${master.username} / ${masterPassword}`,
-    admin: admin.email,
-    bidder: bidder.email,
+    master: `${master.username} / ${masterPassword}`
   });
 }
 
