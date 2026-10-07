@@ -1,0 +1,35 @@
+{
+  "name": "@anchorproposal/desktop",
+  "version": "0.2.0",
+  "private": true,
+  "description": "AnchorProposal Windows desktop companion",
+  "author": "AnchorProposal",
+  "main": "main/index.cjs",
+  "apiServer": "https://anchorproposal.duckdns.org/backend",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "start": "pnpm build && electron .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.cjs",
+    "test:smoke": "node scripts/smoke.cjs",
+    "package:win": "node scripts/package.cjs",
+    "package:dir": "pnpm build && electron-builder --dir --win --x64"
+  },
+  "dependencies": { "react": "^19.2.7", "react-dom": "^19.2.7", "lucide-react": "^0.469.0" },
+  "devDependencies": {
+    "@types/react": "^19.0.2", "@types/react-dom": "^19.0.2", "typescript": "^5.7.2",
+    "electron": "44.5.1", "electron-builder": "26.15.3", "esbuild": "0.28.2"
+  },
+  "build": {
+    "appId": "biz.anchorproposal.desktop",
+    "productName": "AnchorProposal",
+    "directories": { "output": "release/build", "app": "build-app" },
+    "electronDist": "node_modules/electron/dist",
+    "electronVersion": "44.5.1",
+    "files": ["main/**/*", "!main/smoke.cjs", "dist/**/*", "assets/**/*", "package.json", "!node_modules/**/*"],
+    "asar": true,
+    "win": { "icon": "assets/icon.ico", "target": ["nsis"], "electronLanguages": ["en-US"], "signExecutable": false },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "runAfterFinish": false, "deleteAppDataOnUninstall": false, "artifactName": "AnchorProposal-Setup.exe" },
+    "portable": { "artifactName": "AnchorProposal.exe" }
+  }
+}

@@ -1,0 +1,59 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+:root {
+  --primary: #0d7377;
+  --primary-light: #14919b;
+  --primary-deep: #065a5e;
+  --primary-muted: #a8d5d7;
+  --accent: #0d7377;
+  --sidebar-bg: #065a5e;
+  --border: #d4e5e6;
+  --surface: #ffffff;
+  --surface-muted: #f3f8f8;
+  --text: #1a3a3b;
+  --text-muted: #5a7a7c;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  color: var(--text);
+  background: var(--surface-muted);
+}
+
+/* Auth geometric grid */
+.auth-geo {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.auth-input {
+  @apply w-full rounded-md bg-white px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400
+    border-0 shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50;
+}
+
+.auth-label {
+  @apply block text-sm font-medium text-white/90 mb-1.5;
+}
+
+.auth-btn {
+  @apply w-full rounded-md bg-white py-3 text-sm font-semibold text-primary-deep
+    hover:bg-white/95 disabled:opacity-60 transition-colors
+    flex items-center justify-center gap-2;
+}
+
+.page-shell {
+  @apply p-4 sm:p-6 lg:p-8;
+}
+
+.page-card {
+  @apply bg-white border border-[var(--border)] rounded-xl shadow-sm overflow-hidden;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+    bg-primary text-white hover:bg-primary-light disabled:opacity-60 transition-colors;
+}

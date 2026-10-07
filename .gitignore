@@ -1,0 +1,38 @@
+node_modules
+dist
+.next
+.turbo
+*.log
+.DS_Store
+
+# Generated resumes / cover letters (local disk storage)
+storage/
+# Accidental folder name with trailing space (Windows)
+storage\ /
+config.bat
+
+# Local template rendering checks
+/tmp/template-qa/
+/tmp/template-typecheck.log
+/tmp/generation-qa/
+/tmp/settings-qa/
+/tmp/answers-qa/
+/tmp/qa-security/
+/tmp/inspect-config.cjs
+/tmp/functional-qa/
+
+# Local credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Packaged Windows desktop builds and isolated desktop QA state
+/apps/desktop/release/
+/apps/desktop/build-app/
+/tmp/desktop-qa/
+/tmp/electron-v*-win32-x64.zip
+/tmp/nsis-*.7z
+/tmp/desktop-api.*.log
+/tmp/download-qa/
+/tmp/download-web-build.log
