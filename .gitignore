@@ -6,7 +6,8 @@ dist
 .DS_Store
 
 # Generated resumes / cover letters (local disk storage)
-storage/
+/storage/
+/apps/api/storage/
 # Accidental folder name with trailing space (Windows)
 storage\ /
 config.bat
@@ -36,3 +37,5 @@ config.bat
 /tmp/desktop-api.*.log
 /tmp/download-qa/
 /tmp/download-web-build.log
+!/apps/api/src/storage/
+!/apps/api/src/storage/**
