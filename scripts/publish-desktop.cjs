@@ -33,13 +33,14 @@ async function stage(source, directory, metadata, kind) {
   }
 }
 async function publish(directory = path.join(root, 'apps/api/storage/desktop')) {
-  const source = path.join(root, 'apps/desktop/release/standalone/AnchorProposal.exe');
   const metadata = JSON.parse(await fs.readFile(path.join(root, 'apps/desktop/build-app/package.json'), 'utf8'));
   if (!/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(metadata.version)) throw new Error('Invalid desktop release version.');
+  const releaseDirectory = path.join(root, 'apps/desktop/release', `v${metadata.version}`);
+  const source = path.join(releaseDirectory, 'AnchorProposal.exe');
   directory = path.resolve(directory);
   await fs.mkdir(directory, { recursive: true });
   const portable = await stage(source, directory, metadata, 'portable');
-  const setupPath = path.join(root, 'apps/desktop/release/setup/AnchorProposal-Setup.exe');
+  const setupPath = path.join(releaseDirectory, 'AnchorProposal-Setup.exe');
   const setupExists = await fs.stat(setupPath).then(file => file.isFile()).catch(error => {
     if (error.code === 'ENOENT') return false;
     throw error;

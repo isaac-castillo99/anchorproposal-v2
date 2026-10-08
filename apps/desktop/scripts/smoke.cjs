@@ -4,6 +4,9 @@ const path = require('node:path');
 (async () => {
   const directory = path.resolve(__dirname, '../../..', 'tmp/desktop-qa', `native-${Date.now()}`);
   await fs.mkdir(directory, { recursive: true });
+  // Reproduce an upgrade from the old configurable localhost connection.
+  await fs.writeFile(path.join(directory, 'settings.json'), JSON.stringify({ server: 'http://localhost:3001', hotkey: 'Control+Shift+Z', notifications: false }));
+  await fs.writeFile(path.join(directory, 'session.json'), JSON.stringify({ server: 'http://localhost:3001', encrypted: Buffer.from('old-server-session').toString('base64') }));
   const env = { ...process.env, ANCHOR_DESKTOP_SMOKE_DIR: directory }; delete env.ELECTRON_RUN_AS_NODE;
   const child = spawn(require('electron'), ['.'], { cwd: path.resolve(__dirname, '..'), env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; child.stdout.on('data', b => log += b); child.stderr.on('data', b => log += b);

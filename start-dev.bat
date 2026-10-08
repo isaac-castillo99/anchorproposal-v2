@@ -28,7 +28,7 @@ if errorlevel 1 (
 )
 cd /d %ROOT%apps\api
 if exist dist rmdir /s /q dist
-call pnpm exec tsc -p tsconfig.json
+call pnpm run build
 if errorlevel 1 (
   echo API build failed.
   pause
@@ -36,7 +36,7 @@ if errorlevel 1 (
 )
 
 echo Starting API on http://localhost:3001 ...
-start "AnchorProposal API" cmd /k "cd /d %ROOT%apps\api && set DATABASE_URL=%DATABASE_URL% && set REDIS_URL=%REDIS_URL% && set JWT_SECRET=%JWT_SECRET% && set JWT_REFRESH_SECRET=%JWT_REFRESH_SECRET% && set API_PORT=%API_PORT% && set STORAGE_PATH=%STORAGE_PATH% && set APP_WEB_URL=%APP_WEB_URL% && node dist\main.js"
+start "AnchorProposal API" cmd /k "cd /d %ROOT%apps\api && set DATABASE_URL=%DATABASE_URL% && set REDIS_URL=%REDIS_URL% && set JWT_SECRET=%JWT_SECRET% && set JWT_REFRESH_SECRET=%JWT_REFRESH_SECRET% && set API_PORT=%API_PORT% && set STORAGE_PATH=%STORAGE_PATH% && set APP_WEB_URL=%APP_WEB_URL% && pnpm start"
 
 timeout /t 3 /nobreak >nul
 

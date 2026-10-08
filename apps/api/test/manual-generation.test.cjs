@@ -94,7 +94,7 @@ test('manual import saves a completed version, snapshot, template, conversation 
   assert.ok(saved.completedAt instanceof Date);
   assert.equal(saved.templateVersionId, 'template-1');
   assert.equal(saved.promptVersionId, 'prompt-1');
-  assert.equal(saved.structuredOutputJson.contact.title, 'Backend Engineer');
+  assert.equal(saved.structuredOutputJson.contact.title, saved.structuredOutputJson.experiences[0].title);
   assert.equal(saved.structuredOutputJson.coverLetter, undefined, 'resume-only imports must not silently create a default letter');
   assert.deepEqual(saved.profileSnapshotJson, f.state.snapshot);
   assert.deepEqual(saved.turns.create.map((t) => t.purpose), ['resume_system', 'resume_user', 'resume_assistant']);

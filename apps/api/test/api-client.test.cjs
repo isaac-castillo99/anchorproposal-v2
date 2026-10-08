@@ -14,6 +14,13 @@ function client(fetch) {
     setItem: (key, value) => storage.set(key, value),
     removeItem: (key) => storage.delete(key),
   } };
+  context.require = name => {
+    assert.ok(['./desktop-bridge', './download-filename'].includes(name), `Unexpected client import: ${name}`);
+    const moduleSource = fs.readFileSync(path.resolve(__dirname, '../../web/src/lib', `${name}.ts`), 'utf8');
+    const moduleContext = { ...context, exports: {} };
+    vm.runInNewContext(ts.transpileModule(moduleSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText, moduleContext);
+    return moduleContext.exports;
+  };
   vm.runInNewContext(js, context);
   return { api: context.exports.api, storage };
 }

@@ -65,7 +65,7 @@ Deploy the updated API and web app, then use Master release management to upload
 
 Set `DESKTOP_RELEASE_DIR` in the API environment to use another absolute directory. A release change is picked up without restarting the API. Missing files and incomplete uploads disable the corresponding download rather than serving a broken link. Download endpoints stream large files and support byte-range requests. `/desktop/releases/:id/windows/:kind` addresses a specific published version; the original `/desktop/windows` and `/desktop/windows/setup` endpoints remain available for compatibility.
 
-Verify deployment with `GET https://anchorproposal.duckdns.org/backend/desktop/release` (expect `available: true` and both `downloads` entries), then send `HEAD` requests to `/backend/desktop/windows` and `/backend/desktop/windows/setup` (expect each executable's size and attachment filename). Open `https://anchorproposal.duckdns.org/download` and try both selections. The desktop streaming endpoint and `20261006120000_device_sessions` database migration must also be deployed for the app's generation and device sessions.
+Verify deployment with `GET https://anchorproposal.giize.com/backend/desktop/release` (expect `available: true` and both `downloads` entries), then send `HEAD` requests to `/backend/desktop/windows` and `/backend/desktop/windows/setup` (expect each executable's size and attachment filename). Open `https://anchorproposal.giize.com/download` and try both selections. The desktop streaming endpoint and `20261006120000_device_sessions` database migration must also be deployed for the app's generation and device sessions.
 
 | Issue | Resolution |
 |-------|------------|

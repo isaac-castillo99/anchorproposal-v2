@@ -56,8 +56,7 @@ export class DeepseekService {
       RESUME_JSON_EXAMPLE,
       'Required keys: contact, summary, skills, experiences, educations, certificates, coverLetter.',
       'Experience title mode: saved. Keep each experience title exactly as saved in the profile. Return experiences in the same order as the profile. This takes precedence over instructions to tailor experience roles.',
-      'contact.title is the professional headline under the name: ground it in the candidate\'s real profile title / current role.',
-      'You may lightly reflect the job domain from the JD, but NEVER copy, paraphrase, or lightly rename the target job title into contact.title (that looks fake to recruiters).',
+      'contact.title must exactly match the first (most recent) experience title. When there is no experience, use the saved profile title.',
       'CRITICAL: every item in experiences MUST include "bullets": an array of 4-8 plain strings (achievements/responsibilities). Never omit bullets. Never use nested objects for bullets.',
       'Education/certificate fields must be plain strings.',
       COVER_LETTER_INSTRUCTIONS,
@@ -609,7 +608,7 @@ export class DeepseekService {
       ...obj,
       contact: {
         name: meta.candidateName || [profile.firstName, profile.lastName].filter(Boolean).join(' '),
-        title: meta.profileTitle || this.normalizeExperience(saved[0] || {}).title,
+        title: experiences[0]?.title || meta.profileTitle,
         email: profile.email, phone: profile.phone,
         address: profile.address || [profile.city, profile.state, profile.country].filter(Boolean).join(', '),
         linkedin: profile.linkedin || linkedin,
@@ -785,9 +784,8 @@ export class DeepseekService {
   }
 
   /**
-   * Headline under the name must stay authentic to the profile.
-   * Never use the target job title (HR red flag). Prefer profile title,
-   * then a non-JD AI headline, then most recent experience title.
+   * Headline matches the most recent experience after applying the prompt's
+   * title mode. Profile and non-JD AI headlines are fallbacks without history.
    */
   private resolveContactTitle(
     aiCandidates: string[],
@@ -800,7 +798,8 @@ export class DeepseekService {
       .map((t) => plainText(t))
       .find((t) => t && !this.titlesMatchJob(t, meta.jobTitle));
 
-    // Profile title is the authentic base — never replace with the JD job title.
+    // Keep the headline consistent with the most recent rendered experience.
+    if (recentRole) return recentRole;
     if (profileTitle) return profileTitle;
     // AI may lightly reflect JD domain only when it does not copy the job title.
     if (aiTitle) return aiTitle;

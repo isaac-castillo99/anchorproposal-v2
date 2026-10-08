@@ -539,27 +539,34 @@ function ApplicationsPageInner() {
     return params;
   }, [statusFilter, isTrueAdmin, appsTab]);
 
+  const listRequest = useRef(0);
   const load = useCallback(async () => {
+    const request = ++listRequest.current;
     setLoading(true);
     try {
       const data = (await api.getApplications(buildListParams())) as Application[];
-      setApps(data);
+      if (request === listRequest.current) setApps(data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load applications');
+      if (request === listRequest.current) toast.error(err instanceof Error ? err.message : 'Failed to load applications');
     } finally {
-      setLoading(false);
+      if (request === listRequest.current) setLoading(false);
     }
   }, [buildListParams]);
 
   useEffect(() => {
+    const refresh = () => { if (canBid) void load(); };
+    window.addEventListener('focus', refresh);
+    const off = (window as any).anchor?.onEvent((event: any) => {
+      if (event.type === 'data-changed' && /^\/(applications|generations)/.test(event.route) || event.type === 'job' && event.job?.stage === 'completed') refresh();
+    });
+    return () => { window.removeEventListener('focus', refresh); off?.(); };
+  }, [canBid, load]);
+
+  useEffect(() => {
     if (!canBid) return;
-    setLoading(true);
-    api
-      .getApplications(buildListParams())
-      .then((data) => setApps(data as Application[]))
-      .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to load applications'))
-      .finally(() => setLoading(false));
-  }, [canBid, buildListParams]);
+    void load();
+    return () => { listRequest.current++; };
+  }, [canBid, load]);
 
   useEffect(() => {
     if (!canBid) return;

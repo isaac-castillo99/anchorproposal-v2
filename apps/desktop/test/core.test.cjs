@@ -3,12 +3,21 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const { serverUrl, panelBounds, apiRequest, hotkey, DEFAULT_HOTKEY } = require('../main/security.cjs');
+const { serverUrl, panelBounds, apiRequest, hotkey, DEFAULT_HOTKEY, DESKTOP_API_SERVER, restoreSettings } = require('../main/security.cjs');
 const { DesktopSession } = require('../main/session.cjs');
 const { consumeEvents, GenerationRunner } = require('../main/generation.cjs');
 const secureStorage = { isEncryptionAvailable: () => true, encryptString: value => Buffer.from(`encrypted:${Buffer.from(value).toString('base64')}`), decryptString: value => Buffer.from(value.toString().slice(10), 'base64').toString() };
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const deferred = () => { let resolve; const promise = new Promise(r => resolve = r); return { promise, resolve }; };
+test('saved server addresses cannot override production while personal preferences survive upgrades', () => {
+  const defaults = { server: DESKTOP_API_SERVER, hotkey: DEFAULT_HOTKEY, alwaysOnTop: true, notifications: true, launchAtLogin: false };
+  for (const server of ['http://localhost:3001', 'https://anchorproposal.duckdns.org/backend', 'https://other.example', '', null]) {
+    const saved = { server, hotkey: 'Alt+F12', alwaysOnTop: false, notifications: false, launchAtLogin: true };
+    assert.deepEqual(restoreSettings(saved, defaults), { ...saved, server: DESKTOP_API_SERVER });
+  }
+  assert.deepEqual(restoreSettings({ server: 'invalid', hotkey: 'invalid', notifications: 'false' }, defaults), defaults);
+  assert.deepEqual(restoreSettings(null, defaults), defaults);
+});
 async function fixture(t, fetcher) { const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'anchor-test-')); t.after(() => fs.rm(directory, { recursive: true, force: true })); const session = new DesktopSession({ directory, secureStorage, fetcher }); await session.load('https://api.example.test/backend'); return session; }
 test('first launch requires an explicit API and never contacts a local server', async () => {
   const session = new DesktopSession({ directory: '', secureStorage, fetcher: () => { throw new Error('Unexpected network request'); } });

@@ -29,6 +29,7 @@ export function ApplicationFormFields({
   profiles,
   templates,
   showTemplateSelect,
+  showProfileSelect = true,
   locations,
   sources,
   onOptionsChange,
@@ -38,6 +39,7 @@ export function ApplicationFormFields({
   profiles: ProfileOption[];
   templates: { id: string; name: string; isDefault?: boolean }[];
   showTemplateSelect?: boolean;
+  showProfileSelect?: boolean;
   locations: ApplicationOption[];
   sources: ApplicationOption[];
   onOptionsChange: () => Promise<{
@@ -132,7 +134,7 @@ export function ApplicationFormFields({
         onOptionsChange={onOptionsChange}
       />
 
-      <div>
+      {showProfileSelect && <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Profile</label>
         <select
           value={form.profileId}
@@ -148,7 +150,7 @@ export function ApplicationFormFields({
             </option>
           ))}
         </select>
-      </div>
+      </div>}
 
       {showTemplateSelect && (
         <div>

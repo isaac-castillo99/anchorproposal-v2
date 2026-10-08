@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -93,8 +93,10 @@ export default function DashboardPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const metricsRequest = useRef(0);
 
   const loadMetrics = useCallback(async () => {
+    const request = ++metricsRequest.current;
     setLoading(true);
     try {
       const params = isAdmin
@@ -107,16 +109,22 @@ export default function DashboardPage() {
           }
         : undefined;
       const metrics = await api.getDashboardMetrics(params);
-      setData(metrics);
+      if (request === metricsRequest.current) setData(metrics);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (request === metricsRequest.current) setLoading(false);
     }
   }, [isAdmin, isMaster, adminIds, bidderIds, statuses, startDate, endDate]);
 
   useEffect(() => {
-    loadMetrics();
+    void loadMetrics();
+    const refresh = () => { void loadMetrics(); };
+    window.addEventListener('focus', refresh);
+    const off = (window as any).anchor?.onEvent((event: any) => {
+      if (event.type === 'data-changed' && /^\/(applications|generations)/.test(event.route) || event.type === 'job' && event.job?.stage === 'completed') refresh();
+    });
+    return () => { metricsRequest.current++; window.removeEventListener('focus', refresh); off?.(); };
   }, [loadMetrics]);
 
   const filterOptions = data?.filterOptions;

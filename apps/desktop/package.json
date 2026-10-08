@@ -1,11 +1,11 @@
 {
   "name": "@anchorproposal/desktop",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "private": true,
   "description": "AnchorProposal Windows desktop companion",
   "author": "AnchorProposal",
   "main": "main/index.cjs",
-  "apiServer": "https://anchorproposal.duckdns.org/backend",
+  "apiServer": "https://anchorproposal.giize.com/backend",
   "scripts": {
     "build": "node scripts/build.cjs",
     "start": "pnpm build && electron .",

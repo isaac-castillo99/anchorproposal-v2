@@ -3,14 +3,14 @@ const path = require('node:path');
 const esbuild = require('esbuild');
 const { createRequire } = require('node:module');
 const { createIcons } = require('./icons.cjs');
-const { serverUrl } = require('../main/security.cjs');
+const { DESKTOP_API_SERVER } = require('../main/security.cjs');
 async function build() {
   const root = path.resolve(__dirname, '..');
   const web = path.resolve(root, '../web');
   const webRequire = createRequire(path.join(web, 'package.json'));
   const manifest = require('../package.json');
-  const configuredServer = process.env.ANCHOR_API_URL ?? manifest.apiServer ?? '';
-  const apiServer = configuredServer.trim() ? serverUrl(configuredServer.trim()) : '';
+  const apiServer = DESKTOP_API_SERVER;
+  if (manifest.apiServer !== apiServer) throw new Error('Desktop package metadata must match the fixed AnchorProposal API server.');
   for (const generated of [path.join(root, 'dist'), path.join(root, 'build-app/dist')]) {
     if (!generated.startsWith(root + path.sep) || path.basename(generated) !== 'dist') throw new Error('Unsafe generated output path.');
     await fs.rm(generated, { recursive: true, force: true });

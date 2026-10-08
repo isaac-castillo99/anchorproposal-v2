@@ -111,7 +111,7 @@ export class DocumentRendererService {
       (templateConfig as { layout?: { headerAlignment?: string } }).layout?.headerAlignment === 'center'
         ? AlignmentType.CENTER
         : AlignmentType.LEFT;
-    const contact = content.contact || { name: 'Candidate' };
+    const contact = { ...(content.contact || { name: 'Candidate' }), ...(content.experiences?.length ? { title: experienceTitle(content.experiences[0]) } : {}) };
     const visibility = cfg.sections?.visibility || {};
     const order = cfg.sections?.order?.length
       ? cfg.sections.order

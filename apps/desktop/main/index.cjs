@@ -4,7 +4,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { DesktopSession } = require('./session.cjs');
 const { GenerationRunner } = require('./generation.cjs');
-const { serverUrl, panelBounds, apiRequest, safeFilename, hotkey, DEFAULT_HOTKEY } = require('./security.cjs');
+const { panelBounds, apiRequest, safeFilename, hotkey, DEFAULT_HOTKEY, DESKTOP_API_SERVER, restoreSettings } = require('./security.cjs');
 const startedAt = Date.now();
 protocol.registerSchemesAsPrivileged([{ scheme: 'anchor', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
 const smokePath = !app.isPackaged && process.env.ANCHOR_DESKTOP_SMOKE_DIR;
@@ -12,12 +12,21 @@ const probeArg = process.argv.find(value => value.startsWith('--startup-probe=')
 const probePath = probeArg ? path.resolve(probeArg.slice('--startup-probe='.length)) : null;
 if (smokePath || probePath) { app.setPath('userData', path.resolve(smokePath || probePath)); app.disableHardwareAcceleration(); }
 let window, quickWindow, tray, auth, runner, settings, quitting = false, compact = false, shortcutError = '', quickLoading;
-const bundledServer = smokePath || probePath ? '' : require('../package.json').apiServer;
-const defaults = { server: bundledServer ? serverUrl(bundledServer) : '', hotkey: DEFAULT_HOTKEY, alwaysOnTop: true, launchAtLogin: false, notifications: true };
+const defaults = { server: DESKTOP_API_SERVER, hotkey: DEFAULT_HOTKEY, alwaysOnTop: true, launchAtLogin: false, notifications: true };
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 const windows = () => [window, quickWindow].filter(win => win && !win.isDestroyed());
 const send = value => windows().forEach(win => win.webContents.send('anchor:event', value));
-function position() { if (quickWindow && !quickWindow.isDestroyed()) quickWindow.setBounds(panelBounds(screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea, compact)); }
+function position(initial = false) {
+  if (!quickWindow || quickWindow.isDestroyed()) return;
+  const current = quickWindow.getBounds();
+  const area = (initial ? screen.getDisplayNearestPoint(screen.getCursorScreenPoint()) : screen.getDisplayMatching(current)).workArea;
+  const bounds = panelBounds(area, compact);
+  if (!initial) {
+    bounds.x = Math.max(area.x, Math.min(current.x, area.x + area.width - bounds.width));
+    bounds.y = Math.max(area.y, Math.min(current.y, area.y + area.height - bounds.height));
+  }
+  quickWindow.setBounds(bounds);
+}
 function showWorkspace(route) {
   if (!window) return;
   if (window.isMinimized()) window.restore();
@@ -26,11 +35,13 @@ function showWorkspace(route) {
 }
 async function showQuick(showResult = false) {
   if (!quickWindow || quickWindow.isDestroyed()) {
-    quickWindow = makeWindow(true); compact = Boolean(runner?.active); position();
+    quickWindow = makeWindow(true); compact = Boolean(runner?.active); position(true);
     quickLoading = quickWindow.loadURL('anchor://app/index.html?view=quick');
   }
   await quickLoading;
-  compact = Boolean(runner?.active || (showResult && runner?.job)); position();
+  const nextCompact = Boolean(runner?.active);
+  if (nextCompact !== compact) { compact = nextCompact; position(); }
+  if (quickWindow.isMinimized()) quickWindow.restore();
   quickWindow.show(); quickWindow.focus();
   quickWindow.webContents.send('anchor:event', { type: 'quick-show', job: runner?.job || null, showResult });
 }
@@ -56,13 +67,11 @@ function handle(name, fn) {
 }
 async function saveSettings(_win, input) {
   if (!input || typeof input !== 'object') throw new Error('Invalid settings.');
-  if (runner.active && input.server && serverUrl(input.server) !== settings.server) throw new Error('Wait for generation to finish before changing servers.');
+  if (input.server !== undefined && input.server !== DESKTOP_API_SERVER) throw new Error('The server connection is managed by AnchorProposal.');
   const next = { ...settings };
-  if (input.server !== undefined) next.server = serverUrl(input.server);
   if (input.hotkey !== undefined) next.hotkey = hotkey(input.hotkey);
   for (const key of ['alwaysOnTop', 'launchAtLogin', 'notifications']) if (typeof input[key] === 'boolean') next[key] = input[key];
   registerShortcut(next.hotkey);
-  if (next.server !== settings.server) { await auth.clear(); auth.server = next.server; runner.job = null; send({ type: 'session', signedIn: false }); }
   settings = next; shortcutError = '';
   quickWindow?.setAlwaysOnTop(settings.alwaysOnTop);
   if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: settings.launchAtLogin, path: process.env.PORTABLE_EXECUTABLE_FILE || process.execPath, args: ['--background'] });
@@ -106,7 +115,9 @@ function installHandlers() {
     apiRequest(route, method);
     const serialized = body === undefined ? undefined : JSON.stringify(body);
     if (serialized?.length > 1000000) throw new Error('This request is too large.');
-    return auth.request(route, { method, body: serialized, signal: AbortSignal.timeout(/answers|export/.test(route) ? 180000 : 30000) });
+    const result = await auth.request(route, { method, body: serialized, signal: AbortSignal.timeout(/answers|export/.test(route) ? 180000 : 30000) });
+    if (method !== 'GET') send({ type: 'data-changed', route });
+    return result;
   });
   handle('publicRequest', async (_win, route) => {
     if (route !== '/desktop/release') throw new Error('Unsupported public request.');
@@ -161,7 +172,7 @@ function installHandlers() {
 function makeWindow(quick) {
   const area = screen.getPrimaryDisplay().workArea;
   const win = new BrowserWindow({ ...(quick ? panelBounds(area) : { width: Math.min(1420, area.width - 48), height: Math.min(960, area.height - 48), minWidth: 860, minHeight: 600 }),
-    show: false, frame: false, resizable: !quick, backgroundColor: '#0b1019', title: quick ? 'New application — AnchorProposal' : 'AnchorProposal', alwaysOnTop: quick && settings.alwaysOnTop, skipTaskbar: quick,
+    show: false, frame: false, resizable: true, movable: true, ...(quick ? { minWidth: Math.min(420, area.width), minHeight: Math.min(320, area.height) } : {}), backgroundColor: '#0b1019', title: quick ? 'New application — AnchorProposal' : 'AnchorProposal', alwaysOnTop: quick && settings.alwaysOnTop, skipTaskbar: quick,
     icon: path.join(__dirname, '../assets/icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: true, backgroundThrottling: false, devTools: !app.isPackaged, offscreen: Boolean(smokePath || probePath) },
   });
@@ -172,9 +183,15 @@ function makeWindow(quick) {
 }
 async function boot() {
   app.setAppUserModelId('biz.anchorproposal.desktop'); settings = { ...defaults };
-  try { const value = JSON.parse(await fs.readFile(settingsFile(), 'utf8')); settings = { ...defaults, ...value, server: value.server ? serverUrl(value.server) : '', hotkey: hotkey(value.hotkey) }; } catch {}
+  let savedSettings;
+  try { savedSettings = JSON.parse(await fs.readFile(settingsFile(), 'utf8')); settings = restoreSettings(savedSettings, defaults); } catch {}
   auth = new DesktopSession({ directory: app.getPath('userData'), secureStorage: safeStorage });
-  if (settings.server) await auth.load(settings.server);
+  await auth.load(DESKTOP_API_SERVER);
+  if (savedSettings && savedSettings.server !== DESKTOP_API_SERVER) {
+    // Credentials are bound to their original server; old local/custom sessions require a new sign-in.
+    if (!auth.refresh) await auth.clear();
+    await fs.writeFile(settingsFile(), JSON.stringify(settings));
+  }
   const dist = path.resolve(__dirname, '../dist');
   protocol.handle('anchor', request => {
     const url = new URL(request.url);
@@ -188,6 +205,7 @@ async function boot() {
   runner = new GenerationRunner(auth, job => {
     send({ type: 'job', job });
     if (job.stage === 'connecting') { compact = true; position(); }
+    if (job.stage === 'completed' && !job.finishedAt) { compact = false; position(); }
     if (['completed', 'failed'].includes(job.stage) && !job.finishedAt && settings.notifications && Notification.isSupported() && !smokePath && !probePath) {
       const notice = new Notification({ title: job.stage === 'completed' ? 'Your resume is ready' : 'Generation needs attention', body: job.title, silent: true });
       notice.on('click', () => void showQuick(true)); notice.show();

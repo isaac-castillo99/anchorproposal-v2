@@ -90,7 +90,7 @@ if (-not (Test-Path $apiMain)) {
   pnpm --filter @anchorproposal/shared build
   if ($LASTEXITCODE -ne 0) { Write-Host "Shared build failed." -ForegroundColor Red; exit 1 }
   Push-Location (Join-Path $Root "apps\api")
-  pnpm exec tsc -p tsconfig.json
+  pnpm run build
   $tscOk = $LASTEXITCODE
   Pop-Location
   if ($tscOk -ne 0) { Write-Host "API build failed." -ForegroundColor Red; exit 1 }

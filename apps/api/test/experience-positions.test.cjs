@@ -28,7 +28,7 @@ test('compact tailored JSON fills profile facts and maps each role into the rend
   assert.deepEqual(result.experiences.map(e => e.dates), ['2022 – Present', '2019 – 2022']);
   assert.equal(result.experiences[0].location, 'Seattle');
   assert.deepEqual(result.experiences[0].bullets, compact().experiences[0].bullets);
-  assert.equal(result.contact.email, snapshot.email); assert.equal(result.contact.title, snapshot.profileTitle);
+  assert.equal(result.contact.email, snapshot.email); assert.equal(result.contact.title, result.experiences[0].title);
   assert.equal(result.contact.linkedin, snapshot.links[0].url); assert.equal(result.contact.address, 'Seattle, USA');
   assert.equal(result.educations[0].institution, 'Example University'); assert.equal(result.certificates[0].name, 'Cloud Certificate');
   assert.equal(result.coverLetter, undefined); assert.equal(JSON.stringify(snapshot), before);
@@ -38,6 +38,7 @@ test('saved mode retains exact profile positions even when a full-format custom 
   const output = { ...compact(), contact: { name: 'Alex Example' }, educations: [], certificates: [] };
   const s = service(); const result = s.parseManualResponse(JSON.stringify(output), meta('saved'));
   assert.deepEqual(result.experiences.map(e => e.title), snapshot.experiences.map(e => e.title));
+  assert.equal(result.contact.title, result.experiences[0].title);
   assert.equal(s.parseManualResponse(JSON.stringify(output), { ...meta('saved'), experienceTitleMode: undefined }).experiences[0].title, 'Software Engineer II');
   assert.deepEqual(result.experiences[0].bullets, output.experiences[0].bullets);
 });

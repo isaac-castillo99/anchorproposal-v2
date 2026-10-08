@@ -39,8 +39,8 @@ cd ../..
 
 # 4. Start API
 cd apps/api
-pnpm exec tsc -p tsconfig.json
-node dist/main.js
+pnpm build
+pnpm start
 
 # 5. Start Web (new terminal)
 cd apps/web
@@ -48,6 +48,8 @@ pnpm dev
 ```
 
 Or from root: `pnpm dev` (starts web + api in parallel once scripts are configured)
+
+API build and startup commands check that the installed Prisma client matches `apps/api/prisma/schema.prisma`. A missing or stale generated client is repaired automatically before the API imports its modules, including after a fresh dependency install. This only generates client code; it does not migrate, seed, or reset the database. Production deployments may omit the Prisma CLI after generating a valid client during the build. If generation fails, startup stops with the repair command instead of crashing on a missing enum such as `UserRole.ADMIN`.
 
 - **Web:** http://localhost:3000
 - **API:** http://localhost:3001

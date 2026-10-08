@@ -1,5 +1,13 @@
 const { URL } = require('node:url');
 const DEFAULT_HOTKEY = 'Control+Shift+Z';
+const DESKTOP_API_SERVER = 'https://anchorproposal.giize.com/backend';
+function restoreSettings(saved, defaults) {
+  const settings = { ...defaults, server: DESKTOP_API_SERVER };
+  if (!saved || typeof saved !== 'object') return settings;
+  if (typeof saved.hotkey === 'string') { try { settings.hotkey = hotkey(saved.hotkey); } catch {} }
+  for (const key of ['alwaysOnTop', 'launchAtLogin', 'notifications']) if (typeof saved[key] === 'boolean') settings[key] = saved[key];
+  return settings;
+}
 function hotkey(value) {
   if (typeof value !== 'string') throw new Error('Record a keyboard shortcut.');
   const parts = value.split('+');
@@ -50,4 +58,4 @@ function apiRequest(route, method = 'GET') {
   if (rules.some(([pattern, methods]) => pattern.test(pathname) && methods.includes(method))) return;
   throw new Error('Unsupported desktop operation.');
 }
-module.exports = { serverUrl, panelBounds, apiPath, apiRequest, safeFilename, hotkey, DEFAULT_HOTKEY };
+module.exports = { serverUrl, panelBounds, apiPath, apiRequest, safeFilename, hotkey, DEFAULT_HOTKEY, DESKTOP_API_SERVER, restoreSettings };
